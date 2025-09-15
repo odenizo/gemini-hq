@@ -1,0 +1,21 @@
+name: Repomix Gemini CLI Docs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  repomix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run Repomix
+        run: npx repomix --repo https://github.com/google/gemini-cli --path docs --output-file gemini-cli-docs.json --format json
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Add/update gemini-cli-docs.json from repomix"
+          file_pattern: "gemini-cli-docs.json"
