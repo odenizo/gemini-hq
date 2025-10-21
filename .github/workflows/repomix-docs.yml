@@ -1,21 +1,50 @@
 name: Repomix Gemini CLI Docs
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/repomix-docs.yml
+      - official-docs.md
+  pull_request:
+    paths:
+      - .github/workflows/repomix-docs.yml
+      - official-docs.md
   workflow_dispatch:
 
 jobs:
-  repomix:
+  verify-official-docs:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Run Repomix
-        run: npx repomix --repo https://github.com/google/gemini-cli --path docs --output-file gemini-cli-docs.json --format json
+      - name: Install Repomix
+        run: pip install repomix
 
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Add/update gemini-cli-docs.json from repomix"
-          file_pattern: "gemini-cli-docs.json"
+      - name: Generate official Gemini CLI docs bundle
+        run: |
+          repomix \
+            --remote https://github.com/google-gemini/gemini-cli \
+            --include docs/** \
+            --style markdown \
+            --stdout > official-docs.generated.md
+
+      - name: Ensure official docs bundle is up to date
+        run: |
+          if [ ! -f official-docs.md ]; then
+            echo "::error::official-docs.md is missing. Run 'repomix --remote https://github.com/google-gemini/gemini-cli --include docs/** --style markdown --stdout > official-docs.md' and commit the result." >&2
+            exit 1
+          fi
+
+          if ! diff -q official-docs.md official-docs.generated.md; then
+            echo "::error::official-docs.md is out of date. Run 'repomix --remote https://github.com/google-gemini/gemini-cli --include docs/** --style markdown --stdout > official-docs.md' and commit the updated bundle." >&2
+            exit 1
+          fi
+
+          echo "Official docs bundle is up to date."
+
+      - name: Cleanup generated bundle
+        run: rm -f official-docs.generated.md
