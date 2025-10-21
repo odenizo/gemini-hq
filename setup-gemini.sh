@@ -5,6 +5,8 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -16,10 +18,16 @@ echo "=========================="
 
 # --- Configuration Paths ---
 GEMINI_DIR="$HOME/.gemini"
-CONFIG_SOURCE_DIR="$(pwd)/config"
+CONFIG_SOURCE_DIR="$SCRIPT_DIR/config"
 CONFIG_DEST_DIR="$GEMINI_DIR"
 CREDENTIALS_TEMPLATE="credentials.yaml.template"
 CREDENTIALS_FILE="credentials.yaml"
+
+if [ ! -d "$CONFIG_SOURCE_DIR/gemini" ] || [ ! -d "$CONFIG_SOURCE_DIR/mcp" ]; then
+    echo -e "${RED}✗ Configuration source directories not found in $CONFIG_SOURCE_DIR.${NC}"
+    echo "Please run this script from the repository where the config directory resides."
+    exit 1
+fi
 
 # --- Create Gemini Directory ---
 echo -n "Creating Gemini configuration directory... "
