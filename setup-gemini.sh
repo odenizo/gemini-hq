@@ -60,30 +60,68 @@ echo "Setting up MCP servers..."
 
 # Note: This is a simplified parser for the YAML file.
 # A more robust solution would use a proper YAML parser.
-while IFS= read -r line; do
-    if [[ $line =~ ^[[:space:]]*([a-zA-Z0-9_]+): ]]; then
-        server_name=${BASH_REMATCH[1]}
-        enabled=$(grep -A 2 "$server_name:" "$CONFIG_SOURCE_DIR/mcp/mcp-config.yaml" | grep "enabled:" | awk '{print $2}')
-        command=$(grep -A 3 "$server_name:" "$CONFIG_SOURCE_DIR/mcp/mcp-config.yaml" | grep "command:" | awk '{print $2}')
-        args=$(grep -A 4 "$server_name:" "$CONFIG_SOURCE_DIR/mcp/mcp-config.yaml" | grep "args:" | cut -d'[' -f2 | cut -d']' -f1)
+SERVER_CONFIG="$CONFIG_SOURCE_DIR/mcp/mcp-config.yaml"
 
-        if [ "$enabled" == "true" ]; then
-            echo -n "  - Installing $server_name... "
-            if [ -n "$command" ] && [ -n "$args" ]; then
-                # This is a placeholder for the actual installation command.
-                # In a real scenario, you might run "npm install -g" or similar.
-                echo "($command $args)"
-                # Example of what might be run:
-                # npm install -g ${args//,/ }
-                echo -e "${GREEN}✓ (Simulated installation)${NC}"
-            else
-                echo -e "${RED}✗ Invalid config${NC}"
-            fi
+mapfile -t SERVER_NAMES < <(
+    awk '
+        /^[[:space:]]*#/ { next }
+        /^[[:space:]]*servers:[[:space:]]*$/ { section="servers"; next }
+        /^[[:space:]]*custom_servers:[[:space:]]*$/ { section="custom_servers"; next }
+        /^[[:space:]]*[A-Za-z0-9_]+:[[:space:]]*$/ && $0 !~ /^[[:space:]]/ { section="" }
+        section != "" && /^[[:space:]]{2}([A-Za-z0-9_]+):[[:space:]]*$/ {
+            key=$0
+            sub(/^[[:space:]]*/, "", key)
+            sub(/:.*/, "", key)
+            if (key != "") { print key }
+        }
+    ' "$SERVER_CONFIG"
+)
+
+if [ ${#SERVER_NAMES[@]} -eq 0 ]; then
+    echo -e "${YELLOW}⚠ No MCP servers found to process.${NC}"
+else
+    echo "Discovered MCP servers: ${SERVER_NAMES[*]}"
+fi
+
+get_server_field() {
+    local server_name="$1"
+    local field_name="$2"
+    awk -v srv="$server_name" -v fld="$field_name" '
+        $0 ~ "^[[:space:]]*" srv ":" { found=1; next }
+        found && /^[[:space:]]{2}[A-Za-z0-9_]+:[[:space:]]*$/ && $0 !~ "^[[:space:]]*" srv ":" { exit }
+        found && $0 ~ "^[[:space:]]{4}" fld ":" {
+            line=$0
+            sub(/^[[:space:]]*/, "", line)
+            sub(fld ":", "", line)
+            sub(/^[[:space:]]*/, "", line)
+            sub(/[[:space:]]*$/, "", line)
+            print line
+            exit
+        }
+    ' "$SERVER_CONFIG"
+}
+
+for server_name in "${SERVER_NAMES[@]}"; do
+    enabled=$(get_server_field "$server_name" "enabled")
+    command=$(get_server_field "$server_name" "command")
+    args=$(get_server_field "$server_name" "args")
+
+    if [ "$enabled" == "true" ]; then
+        echo -n "  - Installing $server_name... "
+        if [ -n "$command" ] && [ -n "$args" ]; then
+            # This is a placeholder for the actual installation command.
+            # In a real scenario, you might run "npm install -g" or similar.
+            echo "($command $args)"
+            # Example of what might be run:
+            # npm install -g ${args//,/ }
+            echo -e "${GREEN}✓ (Simulated installation)${NC}"
         else
-             echo -e "  - Skipping $server_name (disabled)"
+            echo -e "${RED}✗ Invalid config${NC}"
         fi
+    else
+        echo -e "  - Skipping $server_name (disabled)"
     fi
-done < <(grep -E "^[[:space:]]{2}[a-zA-Z0-9_]+:" "$CONFIG_SOURCE_DIR/mcp/mcp-config.yaml")
+done
 
 
 echo ""
