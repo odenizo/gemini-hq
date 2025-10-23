@@ -1,0 +1,62 @@
+# Node modules
+
+node_modules/
+
+# Logs
+
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+*.log.*
+*.gz
+
+# Build directories
+
+dist/
+build/
+out/
+
+# Environment variables & Sensitive Config
+
+.env*
+!.env.example
+config/gemini/credentials.yaml # <<< IMPORTANT: Ignore the actual credentials file
+**/*.key
+**/*.pem
+
+# OS-specific files
+
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files & Backups
+
+tmp/
+temp/
+*.bak
+*.orig
+*.swp
+*.swo
+backup-*.*
+config_backup_*.tar.gz
+
+# Python cache
+
+**pycache**/
+*.pyc
+*.pyo
+*.pyd
+
+# MCP Server runtime files (example)
+
+*.pid
+

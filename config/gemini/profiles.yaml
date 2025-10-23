@@ -1,115 +1,13 @@
-# Gemini CLI Profiles Configuration
-# Define different usage profiles for various scenarios
-
-profiles:
-  default:
-    name: "Default Profile"
-    description: "Balanced settings for general use"
-    model: "gemini-1.5-pro"
-    parameters:
-      temperature: 0.7
-      top_p: 0.8
-      top_k: 40
-      max_output_tokens: 4096
-    safety_settings:
-      block_threshold: "BLOCK_MEDIUM_AND_ABOVE"
-    
-  creative:
-    name: "Creative Writing"
-    description: "Optimized for creative and imaginative content"
-    model: "gemini-1.5-pro"
-    parameters:
-      temperature: 0.9
-      top_p: 0.95
-      top_k: 50
-      max_output_tokens: 8192
-    safety_settings:
-      block_threshold: "BLOCK_ONLY_HIGH"
-    
-  analytical:
-    name: "Analytical & Precise"
-    description: "Low temperature for factual and analytical tasks"
-    model: "gemini-1.5-pro"
-    parameters:
-      temperature: 0.1
-      top_p: 0.8
-      top_k: 20
-      max_output_tokens: 4096
-    safety_settings:
-      block_threshold: "BLOCK_MEDIUM_AND_ABOVE"
-    
-  coding:
-    name: "Code Generation"
-    description: "Optimized for code generation and technical content"
-    model: "gemini-1.5-pro"
-    parameters:
-      temperature: 0.2
-      top_p: 0.8
-      top_k: 30
-      max_output_tokens: 8192
-    safety_settings:
-      block_threshold: "BLOCK_MEDIUM_AND_ABOVE"
-    
-  fast:
-    name: "Fast Response"
-    description: "Quick responses using Gemini Flash model"
-    model: "gemini-1.5-flash"
-    parameters:
-      temperature: 0.7
-      top_p: 0.8
-      top_k: 40
-      max_output_tokens: 2048
-    safety_settings:
-      block_threshold: "BLOCK_MEDIUM_AND_ABOVE"
-    
-  research:
-    name: "Research & Analysis"
-    description: "For in-depth research and comprehensive analysis"
-    model: "gemini-1.5-pro"
-    parameters:
-      temperature: 0.3
-      top_p: 0.9
-      top_k: 40
-      max_output_tokens: 8192
-    safety_settings:
-      block_threshold: "BLOCK_MEDIUM_AND_ABOVE"
-    
-  brainstorm:
-    name: "Brainstorming"
-    description: "For ideation and creative brainstorming sessions"
-    model: "gemini-1.5-pro"
-    parameters:
-      temperature: 0.8
-      top_p: 0.9
-      top_k: 50
-      max_output_tokens: 4096
-    safety_settings:
-      block_threshold: "BLOCK_ONLY_HIGH"
-    
-  technical:
-    name: "Technical Documentation"
-    description: "For technical writing and documentation"
-    model: "gemini-1.5-pro"
-    parameters:
-      temperature: 0.4
-      top_p: 0.85
-      top_k: 35
-      max_output_tokens: 6144
-    safety_settings:
-      block_threshold: "BLOCK_MEDIUM_AND_ABOVE"
-
-# Profile inheritance and customization
-inheritance:
-  enable: true
-  base_profile: "default"
-  
-customization:
-  allow_override: true
-  user_profiles_dir: "~/.gemini/user-profiles"
-  
-# Profile management
-management:
-  auto_backup: true
-  version_control: true
-  export_format: ["yaml", "json"]
-  import_validation: true
+# Gemini CLI Profiles ( ~/.gemini/profiles.yaml )
+coder:
+  description: "Profile optimized for coding tasks"
+  default_model: gemini-1.5-pro-latest
+  generation_config:
+    temperature: 0.5
+writer:
+  description: "Profile optimized for creative writing"
+  default_model: gemini-1.5-flash-latest
+  generation_config:
+    temperature: 1.0
+  tools:
+    web_search: true

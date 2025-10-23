@@ -1,0 +1,16 @@
+# Production Environment Overrides (config/gemini/env/prod/config.yaml)
+# These settings will overwrite the base config.yaml when setup script is run with 'prod'
+
+# Use a more robust model in production
+default_model: gemini-1.5-pro-latest
+
+generation_config:
+  temperature: 0.7 # Slightly less creative in prod
+
+telemetry:
+  enabled: true # Ensure telemetry is enabled in prod
+
+# Safety settings stricter in prod?
+# safety_settings:
+#   harassment: BLOCK_LOW_AND_ABOVE
+#   hate_speech: BLOCK_LOW_AND_ABOVE

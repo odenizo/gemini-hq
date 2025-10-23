@@ -1,0 +1,6 @@
+{
+  "trustedFolders": [
+    "/absolute/path/to/your/trusted/project1",
+    "/home/user/another/trusted/directory"
+  ]
+}
