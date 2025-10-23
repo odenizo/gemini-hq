@@ -1,0 +1,14 @@
+# Development Environment Overrides (config/gemini/env/dev/config.yaml)
+# These settings will overwrite the base config.yaml when setup script is run with 'dev'
+
+# Use flash model by default in dev for speed/cost
+default_model: gemini-1.5-flash-latest
+
+generation_config:
+  temperature: 1.0 # Allow more creativity in dev
+
+telemetry:
+  enabled: false # Maybe disable telemetry in dev
+
+ui:
+  theme: dracula # Use a different theme for dev

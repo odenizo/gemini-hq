@@ -1,0 +1,3 @@
+name = "example"
+description = "Demonstration custom command for Gemini CLI"
+prompt = "You are an expert educator. Provide a clear, approachable explanation."

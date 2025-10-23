@@ -1,74 +1,28 @@
-# Gemini CLI Default Configuration
-# This file contains the default settings for the Gemini CLI tool
+# Gemini CLI Base Configuration ( ~/.gemini/config.yaml )
 
-api:
-  base_url: "https://generativelanguage.googleapis.com"
-  version: "v1beta"
-  timeout: 30
-  retries: 3
-  rate_limit:
-    requests_per_minute: 60
-    burst_size: 10
+default_model: gemini-1.5-flash-latest
 
-models:
-  default: "gemini-1.5-pro"
-  available:
-    - "gemini-1.5-pro"
-    - "gemini-1.5-flash"
-    - "gemini-1.0-pro"
-  preferences:
-    temperature: 0.7
-    top_p: 0.8
-    top_k: 40
-    max_output_tokens: 8192
+generation_config:
+  temperature: 0.9
 
-safety:
-  block_threshold: "BLOCK_MEDIUM_AND_ABOVE"
-  categories:
-    - "HARM_CATEGORY_HARASSMENT"
-    - "HARM_CATEGORY_HATE_SPEECH"
-    - "HARM_CATEGORY_SEXUALLY_EXPLICIT"
-    - "HARM_CATEGORY_DANGEROUS_CONTENT"
+safety_settings:
+  harassment: BLOCK_MEDIUM_AND_ABOVE
+  hate_speech: BLOCK_MEDIUM_AND_ABOVE
+  sexually_explicit: BLOCK_MEDIUM_AND_ABOVE
+  dangerous_content: BLOCK_MEDIUM_AND_ABOVE
 
-logging:
-  level: "INFO"
-  format: "json"
-  file: "~/.gemini/logs/gemini.log"
-  max_size: "10MB"
-  max_files: 5
+tools:
+  web_search: true
+  file_system: true
+  shell: true
+  memory: true
+  mcp_server: true
 
-cache:
-  enabled: true
-  ttl: 3600
-  max_size: "100MB"
-  directory: "~/.gemini/cache"
+telemetry:
+  enabled: true # Set to false to disable
+  # endpoint: <custom_endpoint_if_needed> # Optional: Specify a custom telemetry endpoint URL
 
-profiles:
-  default:
-    model: "gemini-1.5-pro"
-    temperature: 0.7
-  creative:
-    model: "gemini-1.5-pro"
-    temperature: 0.9
-    top_p: 0.95
-  precise:
-    model: "gemini-1.5-pro"
-    temperature: 0.1
-    top_p: 0.8
-  fast:
-    model: "gemini-1.5-flash"
-    temperature: 0.7
+ui:
+  theme: default
 
-workflow:
-  auto_save: true
-  backup_count: 10
-  session_timeout: 1800
-
-plugins:
-  enabled: []
-  directory: "~/.gemini/plugins"
-  auto_update: false
-
-experimental:
-  features: []
-  beta_access: false
+check_for_updates: true

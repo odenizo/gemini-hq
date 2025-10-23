@@ -1,0 +1,30 @@
+{
+  "common": [
+    {
+      "name": "local_calculator",
+      "url": "file://$(pwd)/config/mcp/example-mcp-server/openapi.yaml",
+      "description": "Example calculator server running locally (requires `node server.js`)"
+    }
+  ],
+  "dev": [
+    {
+        "name": "dev_internal_tool",
+        "url": "[http://dev.internal-api.local/openapi.json](http://dev.internal-api.local/openapi.json)",
+        "description": "Internal tool (Dev environment)"
+    }
+    // Add other dev-specific servers here
+  ],
+  "prod": [
+    {
+        "name": "prod_internal_tool",
+        "url": "[https://api.internal.prod/openapi.json](https://api.internal.prod/openapi.json)",
+        "description": "Internal tool (Production environment)",
+        "auth": {
+            "type": "api_key",
+            "credential_source": "credential_file",
+            "key_name_in_file": "prod_internal_tool_key" // Assumes this key exists under mcp_auth in credentials.yaml
+        }
+    }
+    // Add other prod-specific servers here
+  ]
+}

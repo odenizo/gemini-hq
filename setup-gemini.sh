@@ -1,137 +1,95 @@
 #!/bin/bash
 
 # Gemini HQ Setup Script
-# Deploys Gemini CLI configurations and sets up MCP servers
+# Installs Gemini CLI, copies base configuration, and applies environment overrides.
 
+# --- Configuration ---
+# Specify the desired Gemini CLI version (e.g., "latest", "0.4.0")
+GEMINI_CLI_VERSION="latest"
+
+# Target environment (dev, prod, etc.). Defaults to 'dev' if no argument provided.
+TARGET_ENV="${1:-dev}"
+
+# Exit immediately if a command exits with a non-zero status.
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "Starting Gemini CLI Setup for environment: $TARGET_ENV"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# --- Configuration Variables ---
+GEMINI_CONFIG_DIR="$HOME/.gemini"
+REPO_CONFIG_BASE_DIR="$(pwd)/config/gemini"
+REPO_CONFIG_ENV_DIR="$REPO_CONFIG_BASE_DIR/env/$TARGET_ENV"
+REPO_COMMANDS_DIR="$(pwd)/commands"
 
-echo "🚀 Gemini HQ Setup Script"
-echo "=========================="
+# --- Prerequisites Check ---
+echo "Checking prerequisites..."
+command -v npm >/dev/null 2>&1 || { echo >&2 "ERROR: npm is required but not installed. Aborting."; exit 1; }
+command -v node >/dev/null 2>&1 || { echo >&2 "ERROR: node is required but not installed. Aborting."; exit 1; }
+echo "Prerequisites met."
 
-# --- Configuration Paths ---
-GEMINI_DIR="$HOME/.gemini"
-CONFIG_SOURCE_DIR="$SCRIPT_DIR/config"
-CONFIG_DEST_DIR="$GEMINI_DIR"
-CREDENTIALS_TEMPLATE="credentials.yaml.template"
-CREDENTIALS_FILE="credentials.yaml"
+# --- Install/Update Gemini CLI ---
+echo "Installing/Updating @google/gemini-cli@${GEMINI_CLI_VERSION} globally via npm..."
+npm install -g "@google/gemini-cli@${GEMINI_CLI_VERSION}"
+echo "Gemini CLI installed."
 
-if [ ! -d "$CONFIG_SOURCE_DIR/gemini" ] || [ ! -d "$CONFIG_SOURCE_DIR/mcp" ]; then
-    echo -e "${RED}✗ Configuration source directories not found in $CONFIG_SOURCE_DIR.${NC}"
-    echo "Please run this script from the repository where the config directory resides."
+# --- Create Gemini Config Directories ---
+echo "Ensuring Gemini configuration directories exist..."
+mkdir -p "$GEMINI_CONFIG_DIR"
+mkdir -p "$GEMINI_CONFIG_DIR/commands/custom"
+mkdir -p "$GEMINI_CONFIG_DIR/extensions"
+mkdir -p "$GEMINI_CONFIG_DIR/logs"
+mkdir -p "$GEMINI_CONFIG_DIR/tmp"
+echo "Configuration directories checked/created in $GEMINI_CONFIG_DIR."
+
+# --- Copy Configuration Files ---
+echo "Copying base configuration files..."
+
+# Check if base credentials file exists in the repo config
+if [ ! -f "$REPO_CONFIG_BASE_DIR/credentials.yaml" ]; then
+    echo >&2 "ERROR: Base configuration file '$REPO_CONFIG_BASE_DIR/credentials.yaml' not found."
+    echo >&2 "Please copy 'credentials.yaml.template' to 'credentials.yaml' and add your API key or ensure ADC is configured."
     exit 1
 fi
 
-# --- Create Gemini Directory ---
-echo -n "Creating Gemini configuration directory... "
-mkdir -p "$CONFIG_DEST_DIR"
-echo -e "${GREEN}✓ Done${NC}"
+cp "$REPO_CONFIG_BASE_DIR/config.yaml" "$GEMINI_CONFIG_DIR/"
+cp "$REPO_CONFIG_BASE_DIR/profiles.yaml" "$GEMINI_CONFIG_DIR/"
+cp "$REPO_CONFIG_BASE_DIR/credentials.yaml" "$GEMINI_CONFIG_DIR/" # Copy the user-configured base credentials
 
-# --- Deploy Configuration Files ---
-echo "Deploying configuration files:"
+echo "Base configuration files copied."
 
-# Copy config.yaml
-echo -n "  - config.yaml... "
-cp "$CONFIG_SOURCE_DIR/gemini/config.yaml" "$CONFIG_DEST_DIR/config.yaml"
-echo -e "${GREEN}✓ Copied${NC}"
-
-# Copy profiles.yaml
-echo -n "  - profiles.yaml... "
-cp "$CONFIG_SOURCE_DIR/gemini/profiles.yaml" "$CONFIG_DEST_DIR/profiles.yaml"
-echo -e "${GREEN}✓ Copied${NC}"
-
-# Copy mcp-config.yaml
-echo -n "  - mcp-config.yaml... "
-cp "$CONFIG_SOURCE_DIR/mcp/mcp-config.yaml" "$CONFIG_DEST_DIR/mcp-config.yaml"
-echo -e "${GREEN}✓ Copied${NC}"
-
-# --- Handle Credentials ---
-echo -n "Handling credentials... "
-if [ ! -f "$CONFIG_DEST_DIR/$CREDENTIALS_FILE" ]; then
-    cp "$CONFIG_SOURCE_DIR/gemini/$CREDENTIALS_TEMPLATE" "$CONFIG_DEST_DIR/$CREDENTIALS_FILE"
-    echo -e "${YELLOW}✓ Created from template${NC}"
-    echo -e "${YELLOW}IMPORTANT: Edit $CONFIG_DEST_DIR/$CREDENTIALS_FILE to add your API keys.${NC}"
-else
-    echo -e "${GREEN}✓ Already exists${NC}"
-fi
-
-# --- Setup MCP Servers ---
-echo ""
-echo "Setting up MCP servers..."
-
-# Note: This is a simplified parser for the YAML file.
-# A more robust solution would use a proper YAML parser.
-SERVER_CONFIG="$CONFIG_SOURCE_DIR/mcp/mcp-config.yaml"
-
-mapfile -t SERVER_NAMES < <(
-    awk '
-        /^[[:space:]]*#/ { next }
-        /^[[:space:]]*servers:[[:space:]]*$/ { section="servers"; next }
-        /^[[:space:]]*custom_servers:[[:space:]]*$/ { section="custom_servers"; next }
-        /^[[:space:]]*[A-Za-z0-9_]+:[[:space:]]*$/ && $0 !~ /^[[:space:]]/ { section="" }
-        section != "" && /^[[:space:]]{2}([A-Za-z0-9_]+):[[:space:]]*$/ {
-            key=$0
-            sub(/^[[:space:]]*/, "", key)
-            sub(/:.*/, "", key)
-            if (key != "") { print key }
-        }
-    ' "$SERVER_CONFIG"
-)
-
-if [ ${#SERVER_NAMES[@]} -eq 0 ]; then
-    echo -e "${YELLOW}⚠ No MCP servers found to process.${NC}"
-else
-    echo "Discovered MCP servers: ${SERVER_NAMES[*]}"
-fi
-
-get_server_field() {
-    local server_name="$1"
-    local field_name="$2"
-    awk -v srv="$server_name" -v fld="$field_name" '
-        $0 ~ "^[[:space:]]*" srv ":" { found=1; next }
-        found && /^[[:space:]]{2}[A-Za-z0-9_]+:[[:space:]]*$/ && $0 !~ "^[[:space:]]*" srv ":" { exit }
-        found && $0 ~ "^[[:space:]]{4}" fld ":" {
-            line=$0
-            sub(/^[[:space:]]*/, "", line)
-            sub(fld ":", "", line)
-            sub(/^[[:space:]]*/, "", line)
-            sub(/[[:space:]]*$/, "", line)
-            print line
-            exit
-        }
-    ' "$SERVER_CONFIG"
-}
-
-for server_name in "${SERVER_NAMES[@]}"; do
-    enabled=$(get_server_field "$server_name" "enabled")
-    command=$(get_server_field "$server_name" "command")
-    args=$(get_server_field "$server_name" "args")
-
-    if [ "$enabled" == "true" ]; then
-        echo -n "  - Installing $server_name... "
-        if [ -n "$command" ] && [ -n "$args" ]; then
-            # This is a placeholder for the actual installation command.
-            # In a real scenario, you might run "npm install -g" or similar.
-            echo "($command $args)"
-            # Example of what might be run:
-            # npm install -g ${args//,/ }
-            echo -e "${GREEN}✓ (Simulated installation)${NC}"
-        else
-            echo -e "${RED}✗ Invalid config${NC}"
-        fi
+# --- Apply Environment Overrides (config.yaml only for simplicity, extend as needed) ---
+if [ -d "$REPO_CONFIG_ENV_DIR" ]; then
+    echo "Applying overrides for environment '$TARGET_ENV'..."
+    if [ -f "$REPO_CONFIG_ENV_DIR/config.yaml" ]; then
+        # This is a simple overwrite. A merge strategy could be implemented with tools like yq if needed.
+        echo "Overwriting config.yaml with $TARGET_ENV version."
+        cp "$REPO_CONFIG_ENV_DIR/config.yaml" "$GEMINI_CONFIG_DIR/"
     else
-        echo -e "  - Skipping $server_name (disabled)"
+        echo "No config.yaml override found for '$TARGET_ENV'."
     fi
-done
+    # Add logic here to copy/merge other env-specific files like profiles.yaml if required
+else
+    echo "No override directory found for environment '$TARGET_ENV'."
+fi
 
+# --- Copy Custom Commands ---
+echo "Copying custom commands..."
+find "$REPO_COMMANDS_DIR/custom" -maxdepth 1 -name "*.toml" -exec cp {} "$GEMINI_CONFIG_DIR/commands/custom/" \;
+echo "Custom commands copied."
 
-echo ""
-echo "🎉 Gemini CLI setup complete!"
-echo "Please review and edit your credentials at $CONFIG_DEST_DIR/$CREDENTIALS_FILE"
+# --- Final Verification ---
+echo "Verifying Gemini CLI installation..."
+if command -v gemini >/dev/null 2>&1; then
+    GEMINI_VERSION=$(gemini --version)
+    echo "Gemini CLI version $GEMINI_VERSION found."
+    echo "Setup complete for environment '$TARGET_ENV'!"
+    echo "Next steps:"
+    echo " - Register MCP servers (optional): ./scripts/register_mcp_servers.sh $TARGET_ENV"
+    echo " - Set trusted folders (optional): ./scripts/manage_trusted_folders.sh add"
+    echo " - Run Gemini: gemini"
+else
+    echo >&2 "ERROR: Gemini CLI command not found in PATH after installation."
+    exit 1
+fi
+
+exit 0
