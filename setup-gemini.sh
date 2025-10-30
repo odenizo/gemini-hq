@@ -29,7 +29,7 @@ echo "Prerequisites met."
 
 # --- Install/Update Gemini CLI ---
 echo "Installing/Updating @google/gemini-cli@${GEMINI_CLI_VERSION} globally via npm..."
-npm install -g "@google/gemini-cli@${GEMINI_CLI_VERSION}"
+sudo npm install -g "@google/gemini-cli@${GEMINI_CLI_VERSION}"
 echo "Gemini CLI installed."
 
 # --- Create Gemini Config Directories ---
