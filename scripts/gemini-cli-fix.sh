@@ -92,14 +92,36 @@ echo "  This will open your browser to sign in."
 echo "  For headless servers, use: gemini auth login --no-browser (if supported)."
 echo ""
 
-# Prefer Chrome for the OAuth dance if available
-BROWSER_APP="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-if [ -x "$BROWSER_APP" ]; then
-  export BROWSER="open -a 'Google Chrome'"
-  echo "  Using Chrome for auth (BROWSER=$BROWSER)"
-elif command -v google-chrome >/dev/null 2>&1; then
-  export BROWSER="google-chrome"
-  echo "  Using google-chrome for auth"
+# Prefer a real browser for the OAuth dance
+if [ -n "${BROWSER:-}" ]; then
+  echo "  Using existing BROWSER=$BROWSER"
+else
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    BROWSER_APP="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    if [ -x "$BROWSER_APP" ]; then
+      export BROWSER="open -a 'Google Chrome'"
+      echo "  Using Chrome (macOS) for auth (BROWSER=$BROWSER)"
+    elif command -v open >/dev/null 2>&1; then
+      export BROWSER="open"
+      echo "  Using macOS default opener (open)"
+    fi
+  else
+    if command -v google-chrome >/dev/null 2>&1; then
+      export BROWSER="google-chrome"
+      echo "  Using google-chrome for auth"
+    elif command -v chromium >/dev/null 2>&1; then
+      export BROWSER="chromium"
+      echo "  Using chromium for auth"
+    elif command -v xdg-open >/dev/null 2>&1; then
+      export BROWSER="xdg-open"
+      echo "  Using xdg-open for auth"
+    fi
+  fi
+  if [ -n "${BROWSER:-}" ]; then
+    export BROWSER
+  else
+    echo "  No browser override set; Gemini CLI will use its default"
+  fi
 fi
 
 gemini auth login
