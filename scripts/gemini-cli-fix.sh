@@ -97,10 +97,11 @@ if [ -n "${BROWSER:-}" ]; then
   echo "  Using existing BROWSER=$BROWSER"
 else
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    BROWSER_APP="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    if [ -x "$BROWSER_APP" ]; then
-      export BROWSER="open -a 'Google Chrome'"
-      echo "  Using Chrome (macOS) for auth (BROWSER=$BROWSER)"
+    # Force Chrome via AppleScript so the auth URL opens reliably
+    APPLESCRIPT_CMD="osascript -e 'on run argv\nset theURL to item 1 of argv\ntell application \"Google Chrome\"\n if not (exists window 1) then make new window\n set URL of active tab of window 1 to theURL\n activate\nend tell\nend run'"
+    if command -v osascript >/dev/null 2>&1; then
+      export BROWSER="$APPLESCRIPT_CMD"
+      echo "  Using Chrome via osascript for auth (macOS)"
     elif command -v open >/dev/null 2>&1; then
       export BROWSER="open"
       echo "  Using macOS default opener (open)"
