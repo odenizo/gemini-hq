@@ -95,8 +95,11 @@ echo ""
 # Prefer Chrome for the OAuth dance if available
 BROWSER_APP="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 if [ -x "$BROWSER_APP" ]; then
-  export BROWSER="$BROWSER_APP"
+  export BROWSER="open -a 'Google Chrome'"
   echo "  Using Chrome for auth (BROWSER=$BROWSER)"
+elif command -v google-chrome >/dev/null 2>&1; then
+  export BROWSER="google-chrome"
+  echo "  Using google-chrome for auth"
 fi
 
 gemini auth login
