@@ -92,6 +92,13 @@ echo "  This will open your browser to sign in."
 echo "  For headless servers, use: gemini auth login --no-browser (if supported)."
 echo ""
 
+# Prefer Chrome for the OAuth dance if available
+BROWSER_APP="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+if [ -x "$BROWSER_APP" ]; then
+  export BROWSER="$BROWSER_APP"
+  echo "  Using Chrome for auth (BROWSER=$BROWSER)"
+fi
+
 gemini auth login
 if [ $? -eq 0 ]; then
   echo "  ✓ Login successful!"
