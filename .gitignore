@@ -60,3 +60,6 @@ config_backup_*.tar.gz
 
 *.pid
 
+
+# AI chat sessions (auto-generated)
+_chats/
